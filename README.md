@@ -29,10 +29,10 @@ Este projeto é uma aplicação simples de CRUD para gerenciamento de contatos (
 ### 1. Clonar o repositório e entrar no diretório do projeto
 
 ```bash
-    git clone https://github.com/seu-usuario/laravel-contacts-crud.git
+    git clone https://github.com/sergio-r1/laravel-crud
 ```
 ```bash
-    cd laravel-contacts-crud
+    cd laravel-crud/backend
 ```
 
 ### 2. Criar o arquivo .env a partir do arquivo exemplo 
