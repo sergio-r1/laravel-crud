@@ -20,7 +20,7 @@ Este projeto é uma aplicação simples de CRUD para gerenciamento de contatos (
 
 ## Requisitos
 
-- [Docker](https://docs.docker.com/get-docker/) (>= 20)
+- [Docker](https://docs.docker.com/get-docker/) 
 
 ---
 
@@ -38,7 +38,7 @@ Este projeto é uma aplicação simples de CRUD para gerenciamento de contatos (
 ### 2. Criar o arquivo .env a partir do arquivo exemplo 
 OBS: Para esse projeto, o .env.example já contém as informações para rodar o projeto, basta apenas fazer a cópia.
 ```bash
-  cp .env.example .env
+    cp .env.example .env
 ```
 ### 3. Realizar o build e a execução do container Docker para inicializar o ambiente da aplicação
 
