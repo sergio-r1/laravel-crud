@@ -10,19 +10,17 @@ class ContactController extends Controller
 {
     public function index()
     {
-        // Lista paginada; ajuste per-page conforme necessário
         return response()->json(Contact::orderBy('id', 'desc')->paginate(10));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:contacts,email'],
-            // Aceitamos CPF com ou sem máscara no input; regex abaixo permite qualquer coisa (normalizamos no Model)
-            'cpf'   => ['required', 'string', 'max:20', 'regex:/^[0-9\.\-\/\s]*$/'],
+            'cpf' => ['required', 'string', 'max:20', 'regex:/^[0-9\.\-\/\s]*$/'],
         ], [
-            'cpf.regex' => 'O CPF deve conter apenas dígitos e opcionalmente pontuação.',
+            'cpf.regex' => 'The CPF must contain only digits and optionally punctuation marks.',
         ]);
 
         $contact = Contact::create($validated);
@@ -37,9 +35,9 @@ class ContactController extends Controller
     public function update(Request $request, Contact $contact)
     {
         $validated = $request->validate([
-            'name'  => ['sometimes', 'required', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('contacts', 'email')->ignore($contact->id)],
-            'cpf'   => ['sometimes', 'required', 'string', 'max:20', 'regex:/^[0-9\.\-\/\s]*$/', Rule::unique('contacts', 'cpf')->ignore($contact->id)],
+            'cpf' => ['sometimes', 'required', 'string', 'max:14', 'regex:/^[0-9\.\-\/\s]*$/', Rule::unique('contacts', 'cpf')->ignore($contact->id)],
         ]);
 
         $contact->update($validated);
