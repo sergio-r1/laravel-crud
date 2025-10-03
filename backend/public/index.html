@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contactss</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 960px;
+            margin: 2rem auto;
+        }
+
+        form, table {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        input {
+            padding: .5rem;
+            margin: .25rem 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: .5rem .75rem;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: .5rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        .row-actions button {
+            margin-right: .5rem;
+        }
+    </style>
+</head>
+<body>
+<h1>Contacts</h1>
+
+<section>
+    <h2>New contact / Edit</h2>
+    <form id="contact-form">
+        <input type="hidden" id="contact-id"/>
+        <label>Name
+            <input type="text" id="input-name" required maxlength="255"/>
+        </label>
+        <label>E-mail
+            <input type="email" id="input-email" required maxlength="255"/>
+        </label>
+        <label>CPF (with or without punctuation)
+            <input type="text" id="input-cpf" required maxlength="20"/>
+        </label>
+        <div>
+            <button type="submit" id="btn-save">Save</button>
+            <button type="button" id="btn-cancel">Cancel</button>
+        </div>
+    </form>
+</section>
+
+<section>
+    <h2>List</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>CPF</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+    </table>
+
+    <div id="pagination" style="margin-top:1rem;"></div>
+</section>
+
+<script>
+    const API_URL = '/api/contacts';
+
+    const tableBody = document.getElementById('table-body');
+    const pagination = document.getElementById('pagination');
+
+    const form = document.getElementById('contact-form');
+    const inputId = document.getElementById('contact-id');
+    const inputName = document.getElementById('input-name');
+    const inputEmail = document.getElementById('input-email');
+    const inputCpf = document.getElementById('input-cpf');
+    const cancelButton = document.getElementById('btn-cancel');
+
+    function formatCpf(digits) {
+        const only = (digits || '').replace(/\D+/g, '');
+        if (only.length !== 11) return digits;
+        return only.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+
+    async function fetchContacts(url = API_URL) {
+        const res = await fetch(url);
+        const data = await res.json();
+        renderTable(data.data || data);
+        renderPagination(data);
+    }
+
+    function renderTable(items) {
+        tableBody.innerHTML = '';
+        items.forEach(contact => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+          <td>${contact.id}</td>
+          <td>${contact.name}</td>
+          <td>${contact.email}</td>
+          <td>${formatCpf(contact.cpf)}</td>
+          <td class="row-actions">
+            <button onclick="onEdit(${contact.id})">Edit</button>
+            <button onclick="onDelete(${contact.id})">Delete</button>
+          </td>
+        `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    function renderPagination(p) {
+        if (!p || typeof p.current_page === 'undefined') {
+            pagination.innerHTML = '';
+            return;
+        }
+        const {links} = p;
+        pagination.innerHTML = links.map(l => {
+            if (!l.url) return `<span style="margin-right:.5rem;">${l.label}</span>`;
+            const active = l.active ? 'style="font-weight:bold;text-decoration:underline;"' : '';
+            const safeUrl = l.url.replace(/^http:\/\/127\.0\.0\.1:8000/, '');
+            return `<a ${active} href="#" onclick="fetchContacts('${safeUrl}'); return false;" style="margin-right:.5rem;">${l.label}</a>`;
+        }).join('');
+    }
+
+    // CRUD
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            name: inputName.value.trim(),
+            email: inputEmail.value.trim(),
+            cpf: inputCpf.value.trim(),
+        };
+        const id = inputId.value;
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${API_URL}/${id}` : API_URL;
+
+        const res = await fetch(url, {
+            method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert('Error saving: ' + JSON.stringify(err));
+            return;
+        }
+
+        resetForm();
+        fetchContacts();
+    });
+
+    function resetForm() {
+        inputId.value = '';
+        inputName.value = '';
+        inputEmail.value = '';
+        inputCpf.value = '';
+        inputName.focus();
+    }
+
+    cancelButton.addEventListener('click', resetForm);
+
+    window.onEdit = async function (id) {
+        const res = await fetch(`${API_URL}/${id}`);
+        const contact = await res.json();
+        inputId.value = contact.id;
+        inputName.value = contact.name;
+        inputEmail.value = contact.email;
+        inputCpf.value = formatCpf(contact.cpf);
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    };
+
+    window.onDelete = async function (id) {
+        if (!confirm('Are you sure you want to delete?')) return;
+        const res = await fetch(`${API_URL}/${id}`, {method: 'DELETE'});
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert('Error deleting: ' + JSON.stringify(err));
+            return;
+        }
+        fetchContacts();
+    };
+
+    fetchContacts();
+</script>
+</body>
+</html>
